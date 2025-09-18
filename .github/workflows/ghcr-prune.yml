@@ -1,0 +1,41 @@
+name: Github Package Cleanup
+# This workflow prunes unused images from the GitHub Container Registry (GHCR)
+# associated with this repository. It can be triggered manually via the
+# "workflow_dispatch" event. The workflow uses a personal access token (PAT)
+# with appropriate permissions to delete images from the registry.
+
+on:
+  # Run on third day of every month at 3:30am system time
+  schedule:
+    - cron: '30 3 3 * *'
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    inputs:
+      dryrun:
+        description: dry-run execution, default 'false'
+        required: true
+        default: false
+        type: boolean
+      keep-at-most-num:
+        description: keep-at-most, default '5'
+        required: false
+        default: 5
+env:
+  REGISTRY_NAME: ghcr.io
+  IMAGE_NAME: hdhr-dvr-docker
+  REGISTRY_IMAGE: hooverdan96/hdhr-dvr-docker
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Cleanup ghcr
+        uses: quartx-analytics/ghcr-cleaner@v1
+        with:
+            owner-type: user # for organizations use org
+            token: ${{ secrets.DELETE_PACKAGES_TOKEN }} # classic PAT read:project, repo, write:packages, delete:packages
+            delete-untagged: true
+            keep-at-most: ${{ env.INPUT_keep-at-most-num || 5 }}
+            dry-run: ${{ github.event.inputs.dryrun || 'false' }}
