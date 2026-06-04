@@ -1,5 +1,7 @@
 Originally forked from: https://github.com/demonrik/HDHR-DVR-docker
 
+__Note: while the current scripts in the repo might not be changing, the docker image is periodically rebuilt to ensure the latest alpine image is included for relevant package/security updates.__
+
 # HDHR-DVR-docker
 Docker Wrapper for SiliconDust's HDHomeRun DVR Engine
 
