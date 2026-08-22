@@ -21,10 +21,17 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           KEEP: ${{ github.event.inputs.num-to-keep || 5 }}
+          OWNER: ${{ github.repository_owner }}
+          REPO: HDHR-DVR-docker
         run: |
-          # Fetch package versions, skip the specified number of newest versions, and delete the rest
-          VERSIONS=$(gh api /user/packages/container/hdhr-dvr-docker/versions --paginate --jq ".[$KEEP:].id")
-          for id in $VERSIONS; do
-            echo "Deleting package version ID: $id"
-            gh api --method DELETE /user/packages/container/hdhr-dvr-docker/versions/$id
-          done
+          # Fetch package versions for this specific user repository
+          VERSIONS=$(gh api "/users/$OWNER/packages/container/$REPO/versions" --paginate --jq "if type == \"array\" then .[$KEEP:][].id else empty end")
+          
+          if [ -z "$VERSIONS" ]; then
+            echo "No package versions to delete (less than or equal to $KEEP versions exist)."
+          else
+            for id in $VERSIONS; do
+              echo "Deleting package version ID: $id"
+              gh api --method DELETE "/users/$OWNER/packages/container/$REPO/versions/$id"
+            done
+          fi
