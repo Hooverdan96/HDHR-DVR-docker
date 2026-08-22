@@ -14,12 +14,17 @@ jobs:
   clean:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
       packages: write
+
     steps:
       - name: Delete old package versions
-        uses: actions/delete-package-versions@v5
-        with:
-          package-name: 'hdhr-dvr-docker'
-          package-type: 'container'
-          min-versions-to-keep: ${{ github.event.inputs.num-to-keep || 5 }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          KEEP: ${{ github.event.inputs.num-to-keep || 5 }}
+        run: |
+          # Fetch package versions, skip the specified number of newest versions, and delete the rest
+          VERSIONS=$(gh api /user/packages/container/hdhr-dvr-docker/versions --paginate --jq ".[$KEEP:].id")
+          for id in $VERSIONS; do
+            echo "Deleting package version ID: $id"
+            gh api --method DELETE /user/packages/container/hdhr-dvr-docker/versions/$id
+          done
